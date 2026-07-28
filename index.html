@@ -433,14 +433,7 @@
 
     const LOCAL_STORAGE_KEY = 'gestor_uso_last_account';
 
-    function isFutureDateTime(dateStr, timeStr) {
-      const selected = new Date(`${dateStr}T${timeStr}`);
-      const now = new Date();
-      return selected > now;
-    }
-
     function createServiceInputBlock(serviceName, dateVal = '', timeVal = '') {
-      const today = new Date().toISOString().split('T')[0];
       const div = document.createElement('div');
       div.className = 'service-input-block';
       div.setAttribute('data-service', serviceName);
@@ -453,7 +446,7 @@
         <div class="datetime-row">
           <div class="form-group">
             <label>Data</label>
-            <input type="date" class="svc-date" min="${today}" value="${dateVal}" />
+            <input type="date" class="svc-date" value="${dateVal}" />
           </div>
           <div class="form-group">
             <label>Hora</label>
@@ -570,7 +563,7 @@
       const serviceBlocks = document.querySelectorAll('.service-input-block');
       
       const servicesPayload = {};
-      let hasInvalidDate = false;
+      let hasIncompleteFields = false;
       let atLeastOneFilled = false;
 
       serviceBlocks.forEach(block => {
@@ -581,12 +574,8 @@
         if (dateVal || timeVal) {
           if (!dateVal || !timeVal) {
             alert(`Preencha ambos a Data e a Hora para a opção ${serviceName}.`);
-            hasInvalidDate = true;
+            hasIncompleteFields = true;
             return;
-          }
-
-          if (!isFutureDateTime(dateVal, timeVal)) {
-            hasInvalidDate = true;
           }
 
           servicesPayload[serviceName] = {
@@ -597,8 +586,7 @@
         }
       });
 
-      if (hasInvalidDate) {
-        alert("Atenção: A data e hora de expiração de todas as opções preenchidas precisam ser no futuro!");
+      if (hasIncompleteFields) {
         return;
       }
 
@@ -748,9 +736,7 @@
           let timerContent = '';
           let actionBtn = '';
 
-          // Lógica invertida dos status
           if (!isTimeUp) {
-            // RELÓGIO CONTANDO: Tag "Expirado" (Em contagem)
             badge = `<span class="badge-status badge-expired">Expirado</span>`;
             
             const diffMs = targetDate - now;
@@ -761,7 +747,6 @@
 
             timerContent = `<div class="timer-text">Falta: ${diffDays}d ${diffHours}h ${diffMins}m ${diffSecs}s</div>`;
           } else {
-            // TEMPO ZERADO / CHEGOU NO 0: Tag "Ativo" + Botão "Agendar Renovação"
             badge = `<span class="badge-status badge-active">Ativo</span>`;
             actionBtn = `
               <button class="btn-action-sm" onclick="scheduleRenewal('${id}', '${svcKey}')">
