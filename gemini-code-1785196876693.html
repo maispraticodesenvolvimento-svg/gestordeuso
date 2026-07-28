@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestor de Uso de Contas</title>
+  <style>
+    :root {
+      --purple-primary: #6c5ce7;
+      --purple-dark: #4834d4;
+      --purple-light: #a29bfe;
+      --bg-color: #f8f7ff;
+      --card-bg: #ffffff;
+      --text-main: #2d3436;
+      --status-green: #00b894;
+      --status-red: #d63031;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    header {
+      width: 100%;
+      max-width: 1000px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      background: linear-gradient(135deg, var(--purple-primary), var(--purple-dark));
+      padding: 20px 30px;
+      border-radius: 12px;
+      color: white;
+      box-shadow: 0 4px 15px rgba(108, 92, 231, 0.2);
+    }
+
+    h1 { font-size: 1.8rem; }
+
+    .btn-add {
+      background-color: white;
+      color: var(--purple-primary);
+      border: none;
+      padding: 10px 20px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-add:hover {
+      background-color: var(--purple-light);
+      color: white;
+    }
+
+    .accounts-grid {
+      width: 100%;
+      max-width: 1000px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 20px;
+      border-left: 6px solid var(--purple-primary);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .card-actions-top {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-card-icon {
+      background: none;
+      border: none;
+      color: #b2bec3;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: color 0.2s;
+    }
+
+    .btn-card-icon.edit:hover { color: var(--purple-primary); }
+    .btn-card-icon.delete:hover { color: var(--status-red); }
+
+    .card-title {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: var(--purple-dark);
+      margin-bottom: 8px;
+      padding-right: 50px;
+    }
+
+    .card-info {
+      font-size: 0.9rem;
+      color: #636e72;
+      margin-bottom: 6px;
+      word-break: break-all;
+    }
+
+    .card-info span {
+      font-weight: bold;
+      color: var(--text-main);
+    }
+
+    .services-container {
+      margin-top: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .service-item {
+      background-color: #f1f0ff;
+      border-radius: 8px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+    }
+
+    .service-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-right: 25px;
+    }
+
+    .service-name {
+      font-weight: bold;
+      color: var(--purple-dark);
+      font-size: 0.95rem;
+    }
+
+    .btn-delete-svc {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: none;
+      border: none;
+      color: #b2bec3;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: color 0.2s;
+    }
+
+    .btn-delete-svc:hover { color: var(--status-red); }
+
+    .badge-status {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
+
+    .badge-expired { background-color: #ffeaa7; color: #d63031; }
+    .badge-active { background-color: #55efc4; color: #006266; }
+
+    .timer-text {
+      font-size: 0.85rem;
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    .btn-action-sm {
+      background-color: var(--purple-primary);
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 600;
+      align-self: flex-start;
+      margin-top: 4px;
+      transition: background 0.2s;
+    }
+
+    .btn-action-sm:hover { background-color: var(--purple-dark); }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+
+    .modal {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+
+    .modal h2 {
+      margin-bottom: 20px;
+      color: var(--purple-dark);
+    }
+
+    .form-group { margin-bottom: 15px; }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #dfe6e9;
+      border-radius: 6px;
+      outline: none;
+    }
+
+    .form-group input:focus { border-color: var(--purple-primary); }
+
+    .service-input-block {
+      background-color: #f8f7ff;
+      border: 1px solid #e0dcfd;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+      position: relative;
+    }
+
+    .service-input-block-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .service-input-block h4 {
+      font-size: 0.95rem;
+      color: var(--purple-dark);
+    }
+
+    .btn-remove-block {
+      background: none;
+      border: none;
+      color: var(--status-red);
+      font-size: 0.8rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .datetime-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .datetime-row .form-group {
+      flex: 1;
+      margin-bottom: 0;
+    }
+
+    .add-custom-service-box {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px dashed #cbd5e1;
+      display: flex;
+      gap: 8px;
+    }
+
+    .add-custom-service-box input {
+      flex: 1;
+      padding: 8px 10px;
+      border: 1px solid #dfe6e9;
+      border-radius: 6px;
+      outline: none;
+    }
+
+    .btn-add-custom {
+      background-color: #00b894;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .btn-secondary {
+      background-color: #dfe6e9;
+      color: var(--text-main);
+      border: none;
+      padding: 10px 15px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background-color: var(--purple-primary);
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Gestor de Uso de Contas</h1>
+    <button class="btn-add" id="openAddModal">+ Adicionar Nova</button>
+  </header>
+
+  <main class="accounts-grid" id="accountsGrid">
+    <p style="grid-column: 1/-1; text-align: center; color: #636e72;">Conectando ao banco de dados...</p>
+  </main>
+
+  <div class="modal-overlay" id="accountModal">
+    <div class="modal">
+      <h2 id="modalTitle">Adicionar Conta de Uso</h2>
+      <form id="accountForm">
+        <input type="hidden" id="accountId" />
+        <input type="hidden" id="modalMode" value="create" />
+        <input type="hidden" id="renewServiceKey" value="" />
+        
+        <div class="form-group" id="groupTitle">
+          <label for="title">Título</label>
+          <input type="text" id="title" placeholder="Ex: Conta Principal" />
+        </div>
+
+        <div class="form-group" id="groupEmail">
+          <label for="email">E-mail</label>
+          <input type="email" id="email" placeholder="usuario@email.com" />
+        </div>
+
+        <div class="form-group" id="groupPassword">
+          <label for="password">Senha (Ficará visível)</label>
+          <input type="text" id="password" placeholder="Senha do serviço" />
+        </div>
+
+        <div id="servicesFormContainer">
+          <h3 style="margin-bottom: 12px; font-size: 1rem; color: var(--purple-dark);">Opções / Serviços de Controle:</h3>
+          
+          <div id="servicesList">
+            <!-- Blocos de serviço são renderizados dinamicamente -->
+          </div>
+
+          <div class="add-custom-service-box" id="addCustomBox">
+            <input type="text" id="newServiceName" placeholder="Outra opção (Ex: CHATGPT, CLAUDE...)" />
+            <button type="button" class="btn-add-custom" id="btnAddCustomService">+ Adicionar</button>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="closeModal">Cancelar</button>
+          <button type="submit" class="btn-primary" id="btnSave">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, push, set, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA-mXBfluRO_nbTYmxhuIbT5m09XdwA3E0",
+      authDomain: "gestor-de-uso.firebaseapp.com",
+      databaseURL: "https://gestor-de-uso-default-rtdb.firebaseio.com",
+      projectId: "gestor-de-uso",
+      storageBucket: "gestor-de-uso.firebasestorage.app",
+      messagingSenderId: "882854620645",
+      appId: "1:882854620645:web:6fc367ab03952cf7ff530c"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const DEFAULT_SERVICES = ['ANTIGRAVITY', 'CODEX', 'VSCODE'];
+
+    const accountsGrid = document.getElementById('accountsGrid');
+    const modalOverlay = document.getElementById('accountModal');
+    const openAddModalBtn = document.getElementById('openAddModal');
+    const closeModalBtn = document.getElementById('closeModal');
+    const accountForm = document.getElementById('accountForm');
+    const servicesList = document.getElementById('servicesList');
+    const btnAddCustomService = document.getElementById('btnAddCustomService');
+    const inputNewServiceName = document.getElementById('newServiceName');
+    
+    const inputId = document.getElementById('accountId');
+    const inputMode = document.getElementById('modalMode');
+    const inputRenewServiceKey = document.getElementById('renewServiceKey');
+    const inputTitle = document.getElementById('title');
+    const inputEmail = document.getElementById('email');
+    const inputPassword = document.getElementById('password');
+    const modalTitle = document.getElementById('modalTitle');
+    const btnSave = document.getElementById('btnSave');
+
+    const LOCAL_STORAGE_KEY = 'gestor_uso_last_account';
+
+    function isFutureDateTime(dateStr, timeStr) {
+      const selected = new Date(`${dateStr}T${timeStr}`);
+      const now = new Date();
+      return selected > now;
+    }
+
+    function createServiceInputBlock(serviceName, dateVal = '', timeVal = '') {
+      const today = new Date().toISOString().split('T')[0];
+      const div = document.createElement('div');
+      div.className = 'service-input-block';
+      div.setAttribute('data-service', serviceName);
+
+      div.innerHTML = `
+        <div class="service-input-block-header">
+          <h4>${serviceName}</h4>
+          <button type="button" class="btn-remove-block" onclick="this.closest('.service-input-block').remove()">Limpar/Remover</button>
+        </div>
+        <div class="datetime-row">
+          <div class="form-group">
+            <label>Data</label>
+            <input type="date" class="svc-date" min="${today}" value="${dateVal}" />
+          </div>
+          <div class="form-group">
+            <label>Hora</label>
+            <input type="time" class="svc-time" value="${timeVal}" />
+          </div>
+        </div>
+      `;
+      return div;
+    }
+
+    function openModal(mode = 'create', accountData = null, targetServiceKey = null) {
+      modalOverlay.style.display = 'flex';
+      inputMode.value = mode;
+      inputRenewServiceKey.value = targetServiceKey || '';
+      servicesList.innerHTML = '';
+
+      document.getElementById('groupTitle').style.display = 'block';
+      document.getElementById('groupEmail').style.display = 'block';
+      document.getElementById('groupPassword').style.display = 'block';
+      document.getElementById('addCustomBox').style.display = 'flex';
+
+      inputTitle.required = true;
+      inputEmail.required = true;
+      inputPassword.required = true;
+
+      if (mode === 'renew' && accountData && targetServiceKey) {
+        modalTitle.innerText = `Agendar Renovação de ${targetServiceKey}`;
+        inputId.value = accountData.id;
+        inputTitle.value = accountData.title;
+        inputEmail.value = accountData.email;
+        inputPassword.value = accountData.password;
+
+        document.getElementById('groupTitle').style.display = 'none';
+        document.getElementById('groupEmail').style.display = 'none';
+        document.getElementById('groupPassword').style.display = 'none';
+        document.getElementById('addCustomBox').style.display = 'none';
+
+        inputTitle.required = false;
+        inputEmail.required = false;
+        inputPassword.required = false;
+
+        const svcData = accountData.services && accountData.services[targetServiceKey];
+        const dateVal = svcData && svcData.expirationDate ? svcData.expirationDate.split('T')[0] : '';
+        const timeVal = svcData && svcData.expirationDate ? svcData.expirationDate.split('T')[1] : '';
+
+        servicesList.appendChild(createServiceInputBlock(targetServiceKey, dateVal, timeVal));
+
+      } else if (mode === 'edit' && accountData) {
+        modalTitle.innerText = "Editar Conta e Opções";
+        inputId.value = accountData.id;
+        inputTitle.value = accountData.title;
+        inputEmail.value = accountData.email;
+        inputPassword.value = accountData.password;
+
+        const existingServices = accountData.services ? Object.keys(accountData.services) : [];
+
+        existingServices.forEach(svcKey => {
+          const svcData = accountData.services[svcKey];
+          const dateVal = svcData && svcData.expirationDate ? svcData.expirationDate.split('T')[0] : '';
+          const timeVal = svcData && svcData.expirationDate ? svcData.expirationDate.split('T')[1] : '';
+          servicesList.appendChild(createServiceInputBlock(svcKey, dateVal, timeVal));
+        });
+
+      } else {
+        modalTitle.innerText = "Adicionar Conta de Uso";
+        accountForm.reset();
+        inputId.value = '';
+
+        DEFAULT_SERVICES.forEach(svcKey => {
+          servicesList.appendChild(createServiceInputBlock(svcKey));
+        });
+
+        const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (savedData) {
+          const parsed = JSON.parse(savedData);
+          inputTitle.value = parsed.title || '';
+          inputEmail.value = parsed.email || '';
+          inputPassword.value = parsed.password || '';
+        }
+      }
+    }
+
+    btnAddCustomService.addEventListener('click', () => {
+      const name = inputNewServiceName.value.trim().toUpperCase();
+      if (!name) {
+        alert("Digite o nome da nova opção!");
+        return;
+      }
+      const existing = document.querySelector(`.service-input-block[data-service="${name}"]`);
+      if (existing) {
+        alert("Esta opção já existe no formulário!");
+        return;
+      }
+      servicesList.appendChild(createServiceInputBlock(name));
+      inputNewServiceName.value = '';
+    });
+
+    function closeModal() {
+      modalOverlay.style.display = 'none';
+      accountForm.reset();
+      btnSave.disabled = false;
+      btnSave.innerText = "Salvar";
+    }
+
+    openAddModalBtn.addEventListener('click', () => openModal('create'));
+    closeModalBtn.addEventListener('click', closeModal);
+
+    accountForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const id = inputId.value;
+      const mode = inputMode.value;
+      const renewKey = inputRenewServiceKey.value;
+      const serviceBlocks = document.querySelectorAll('.service-input-block');
+      
+      const servicesPayload = {};
+      let hasInvalidDate = false;
+      let atLeastOneFilled = false;
+
+      serviceBlocks.forEach(block => {
+        const serviceName = block.getAttribute('data-service');
+        const dateVal = block.querySelector('.svc-date').value;
+        const timeVal = block.querySelector('.svc-time').value;
+
+        if (dateVal || timeVal) {
+          if (!dateVal || !timeVal) {
+            alert(`Preencha ambos a Data e a Hora para a opção ${serviceName}.`);
+            hasInvalidDate = true;
+            return;
+          }
+
+          if (!isFutureDateTime(dateVal, timeVal)) {
+            hasInvalidDate = true;
+          }
+
+          servicesPayload[serviceName] = {
+            expirationDate: `${dateVal}T${timeVal}`,
+            isExpired: false
+          };
+          atLeastOneFilled = true;
+        }
+      });
+
+      if (hasInvalidDate) {
+        alert("Atenção: A data e hora de expiração de todas as opções preenchidas precisam ser no futuro!");
+        return;
+      }
+
+      if (!atLeastOneFilled && mode !== 'renew') {
+        alert("Por favor, preencha a data e hora para pelo menos uma opção.");
+        return;
+      }
+
+      btnSave.disabled = true;
+      btnSave.innerText = "Salvando...";
+
+      try {
+        if (mode === 'edit' && id) {
+          const itemRef = ref(db, `contas_uso/${id}`);
+          await update(itemRef, {
+            title: inputTitle.value,
+            email: inputEmail.value,
+            password: inputPassword.value,
+            services: servicesPayload
+          });
+        } else if (mode === 'renew' && id && renewKey) {
+          const itemRef = ref(db, `contas_uso/${id}/services/${renewKey}`);
+          await set(itemRef, servicesPayload[renewKey]);
+        } else {
+          const lastAccountData = {
+            title: inputTitle.value,
+            email: inputEmail.value,
+            password: inputPassword.value
+          };
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(lastAccountData));
+
+          const newAccountRef = push(ref(db, 'contas_uso'));
+          await set(newAccountRef, {
+            title: inputTitle.value,
+            email: inputEmail.value,
+            password: inputPassword.value,
+            services: servicesPayload
+          });
+        }
+        closeModal();
+      } catch (error) {
+        console.error("Erro Firebase:", error);
+        alert("Erro do Firebase: " + error.message);
+        btnSave.disabled = false;
+        btnSave.innerText = "Salvar";
+      }
+    });
+
+    window.deleteAccount = async function(id) {
+      if (confirm("Tem certeza que deseja remover esta conta completa?")) {
+        try {
+          await remove(ref(db, `contas_uso/${id}`));
+        } catch (error) {
+          alert("Erro ao excluir conta: " + error.message);
+        }
+      }
+    };
+
+    window.deleteSingleService = async function(accountId, serviceKey) {
+      if (confirm(`Deseja remover permanentemente a opção "${serviceKey}" desta conta?`)) {
+        try {
+          const serviceRef = ref(db, `contas_uso/${accountId}/services/${serviceKey}`);
+          await remove(serviceRef);
+        } catch (error) {
+          alert("Erro ao remover serviço do banco de dados: " + error.message);
+        }
+      }
+    };
+
+    window.editAccount = function(id) {
+      const accountData = localAccountsData[id];
+      if (accountData) {
+        openModal('edit', { id, ...accountData });
+      }
+    };
+
+    window.scheduleRenewal = function(id, serviceKey) {
+      const accountData = localAccountsData[id];
+      if (accountData) {
+        openModal('renew', { id, ...accountData }, serviceKey);
+      }
+    };
+
+    let localAccountsData = {};
+
+    onValue(ref(db, 'contas_uso'), (snapshot) => {
+      const data = snapshot.val();
+      
+      if (!data) {
+        accountsGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #636e72;">Nenhuma conta cadastrada.</p>';
+        localAccountsData = {};
+        return;
+      }
+
+      localAccountsData = data;
+      renderCards();
+    }, (error) => {
+      console.error("Erro leitura Firebase:", error);
+      accountsGrid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--status-red); font-weight: bold;">
+        Permissão negada no Firebase!<br>Vá no Console do Firebase > Realtime Database > Regras e libere o acesso.
+      </p>`;
+    });
+
+    function getEarliestExpiration(services) {
+      if (!services) return Infinity;
+      let earliest = Infinity;
+      Object.values(services).forEach(svc => {
+        if (svc && svc.expirationDate) {
+          const time = new Date(svc.expirationDate).getTime();
+          if (time < earliest) earliest = time;
+        }
+      });
+      return earliest;
+    }
+
+    function renderCards() {
+      accountsGrid.innerHTML = '';
+
+      const accountsArray = Object.keys(localAccountsData).map((id) => ({
+        id,
+        ...localAccountsData[id]
+      }));
+
+      accountsArray.sort((a, b) => {
+        return getEarliestExpiration(a.services) - getEarliestExpiration(b.services);
+      });
+
+      accountsArray.forEach((item) => {
+        const id = item.id;
+        const now = new Date();
+
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        let servicesHTML = '';
+        const servicesData = item.services || {};
+        const activeServiceKeys = Object.keys(servicesData);
+
+        activeServiceKeys.forEach(svcKey => {
+          const svc = servicesData[svcKey];
+          if (!svc || !svc.expirationDate) return;
+
+          const targetDate = new Date(svc.expirationDate);
+          const isTimeUp = now >= targetDate;
+
+          let badge = '';
+          let timerContent = '';
+          let actionBtn = '';
+
+          // Lógica invertida dos status
+          if (!isTimeUp) {
+            // RELÓGIO CONTANDO: Tag "Expirado" (Em contagem)
+            badge = `<span class="badge-status badge-expired">Expirado</span>`;
+            
+            const diffMs = targetDate - now;
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+            const diffSecs = Math.floor((diffMs % (1000 * 60)) / 1000);
+
+            timerContent = `<div class="timer-text">Falta: ${diffDays}d ${diffHours}h ${diffMins}m ${diffSecs}s</div>`;
+          } else {
+            // TEMPO ZERADO / CHEGOU NO 0: Tag "Ativo" + Botão "Agendar Renovação"
+            badge = `<span class="badge-status badge-active">Ativo</span>`;
+            actionBtn = `
+              <button class="btn-action-sm" onclick="scheduleRenewal('${id}', '${svcKey}')">
+                Agendar Renovação
+              </button>
+            `;
+          }
+
+          servicesHTML += `
+            <div class="service-item">
+              <button class="btn-delete-svc" onclick="deleteSingleService('${id}', '${svcKey}')" title="Excluir apenas ${svcKey}">🗑️</button>
+              <div class="service-header">
+                <span class="service-name">${svcKey}</span>
+                ${badge}
+              </div>
+              <p class="card-info" style="font-size:0.8rem; margin:0;">
+                <span>Expira:</span> ${targetDate.toLocaleString('pt-BR')}
+              </p>
+              ${timerContent}
+              ${actionBtn}
+            </div>
+          `;
+        });
+
+        if (!servicesHTML) {
+          servicesHTML = `<p class="card-info" style="margin-top: 10px; font-style: italic;">Nenhuma opção cadastrada nesta conta.</p>`;
+        }
+
+        card.innerHTML = `
+          <div class="card-actions-top">
+            <button class="btn-card-icon edit" onclick="editAccount('${id}')" title="Editar Conta e Opções">✏️</button>
+            <button class="btn-card-icon delete" onclick="deleteAccount('${id}')" title="Excluir Conta Inteira">✕</button>
+          </div>
+          <div>
+            <div class="card-header">
+              <span class="card-title">${item.title}</span>
+            </div>
+            <p class="card-info" style="margin-top: 5px;"><span>E-mail:</span> ${item.email}</p>
+            <p class="card-info"><span>Senha:</span> ${item.password}</p>
+            
+            <div class="services-container">
+              ${servicesHTML}
+            </div>
+          </div>
+        `;
+
+        accountsGrid.appendChild(card);
+      });
+    }
+
+    setInterval(() => {
+      if (Object.keys(localAccountsData).length > 0) {
+        renderCards();
+      }
+    }, 1000);
+  </script>
+</body>
+</html>
